@@ -38,7 +38,8 @@ int main() {
     mysteryAnimal = nullptr;
     std::cout << "The animal should initally be nothing: " << AnimalUtil::toStr(*mysteryAnimal) << "\n";
     
-    // Error #3 - Figure it out.
+    // Error #3 - Figure it out. The error assumes good user behavior. 
+    // It has nothing to do with validation checking.
     while (true) {
         mysteryAnimal =
             new AnimalUtil::Animal(static_cast<AnimalUtil::Animal>(1 + std::rand() % 4));
