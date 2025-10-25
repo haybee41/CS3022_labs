@@ -1,0 +1,165 @@
+Lab 03 - Animal Guessing Game 
+Abiola Bamgbose
+abiola.bamgbose@nps.edu
+
+================================================================================
+Question 0#: What are the three errors?
+================================================================================
+
+Error 1: Uninitialized pointer being dereferenced (line 26-27 of original code)
+- mysteryAnimal is declared but not initialized, so it points to random memory
+- Attempting to dereference it with *mysteryAnimal causes undefined behavior
+- This is fixed by commenting out or removing the problematic lines.
+
+Error 2: Dereferencing a nullptr (line 29-30 of original code)
+- The code sets mysteryAnimal = nullptr and then immediately tries to use *mysteryAnimal
+- This always causes a segmentation fault and crashes the program because nullptr 
+  points to address 0, which the operating system protects
+- This is fixed by commenting out or removing the problematic lines.
+
+Error 3: Memory leak in the game loop (starting at line 34)
+- Each iteration allocates new memory with "new" but never deletes the old allocation
+- If the game runs for thousands of rounds, the program would exhaust memory and crash
+- Fixed by Adding "delete mysteryAnimal" before each new allocation
+
+================================================================================
+Question #1: Why doesn't the uninitialized pointer crash?
+================================================================================
+
+When mysteryAnimal is declared but not initialized, it holds a random value left 
+over from whatever was previously in that spot on the stack. If this random value
+points to valid (accessible) memory, the program won't crash when dereferencing,
+but the result will be meaningless or garbage. This behavior depends on whether 
+the random address is valid and not protected by the operating system. 
+================================================================================
+Question #2: Why does the program crash on the nullptr line?
+================================================================================
+
+When mysteryAnimal is set to nullptr, it explicitly points to memory address 0x0.
+Attempting to dereference a nullptr (*mysteryAnimal) tries to access memory at
+address 0. The operating system protects the zero address and triggers a 
+segmentation fault (access violation), immediately terminating the program.
+Unlike the uninitialized pointer which points to random but potentially valid
+memory, nullptr always points to an invalid, protected address.
+
+================================================================================
+Question #3: Memory addresses from 3 runs
+================================================================================
+
+PS C:\Users\james\Desktop\CS3022_labs\lab03_guess_whos_fault> notepad animal_guess.cpp
+PS C:\Users\james\Desktop\CS3022_labs\lab03_guess_whos_fault> g++ -o animal.exe animal_guess.cpp
+PS C:\Users\james\Desktop\CS3022_labs\lab03_guess_whos_fault> ./animal.exe
+staticWelcomeMessage address: 0x7ff6b806a0a0
+
+Welcome to the Animal Guesser!
+Guess the Animal! (1: Dog, 2: Cat, 3: Bird, 4: Fish)
+Enter 0 to quit.
+
+=== Memory Diagnostic ===
+Address of pointer variable: 0x91a1fffa38
+Address pointer is pointing to: 0x27417cedee0
+Value at that address: 2 (Cat)
+========================
+
+Your guess: 2
+Correct! It was Cat
+
+=== Memory Diagnostic ===
+Address of pointer variable: 0x91a1fffa38
+Address pointer is pointing to: 0x27417cedee0
+Value at that address: 2 (Cat)
+========================
+
+Your guess: 5
+Invalid choice! Please enter 1-4 (or 0 to quit).
+
+=== Memory Diagnostic ===
+Address of pointer variable: 0x91a1fffa38
+Address pointer is pointing to: 0x27417cedee0
+Value at that address: 1 (Dog)
+========================
+
+Your guess: abc
+Invalid input; try again.
+
+=== Memory Diagnostic ===
+Address of pointer variable: 0x91a1fffa38
+Address pointer is pointing to: 0x27417cedee0
+Value at that address: 3 (Bird)
+========================
+
+Your guess: 3
+Correct! It was Bird
+
+
+
+MEMORY DIAGRAM:
+
+┌──────────────────────────────────────────────────────────┐
+│                    HIGH MEMORY (0xFFFFFFFF...)           │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│  STACK (grows downward from high addresses):            │
+│  ┌────────────────────────────────────┐                 │
+│  │ 0x91a1fffa38                      │ ← mysteryAnimal  │
+│  │ [contains: 0x27417cedee0]         │   pointer        │
+│  │                                    │   (stays same)   │
+│  └────────────────────────────────────┘                 │
+│                                                          │
+│                      ↓ grows down                        │
+│                                                          │
+│                      (large gap)                         │
+│                                                          │
+│                      ↑ grows up                          │
+│                                                          │
+│  DATA SEGMENT (static/global variables):                │
+│  ┌────────────────────────────────────┐                 │
+│  │ 0x7ff6b806a0a0                    │ ← static         │
+│  │ staticWelcomeMessage               │   WelcomeMessage │
+│  │ "Welcome to the Animal Guesser!"   │   (constant)     │
+│  └────────────────────────────────────┘                 │
+│                                                          │
+│  HEAP (grows upward from low addresses):                │
+│  ┌────────────────────────────────────┐                 │
+│  │ 0x27417cedee0                     │ ← Reused spot!   │
+│  │ [Animal value changes each round] │   Same address   │
+│  │  Round 1: 2 (Cat)                 │   because we     │
+│  │  Round 2: 2 (Cat)                 │   delete before  │
+│  │  Round 3: 1 (Dog)                 │   new allocation │
+│  │  Round 4: 3 (Bird)                │                  │
+│  └────────────────────────────────────┘                 │
+│                                                          │
+├──────────────────────────────────────────────────────────┤
+│                    LOW MEMORY (0x00000000...)            │
+└──────────────────────────────────────────────────────────┘
+
+ADDRESS ANALYSIS:
+
+1. STACK: 0x91a1fffa38 (high memory - 0x9...)
+    Contains the mysteryAnimal pointer variable (This address never changes)
+    
+2. DATA SEGMENT: 0x7ff6b806a0a0 (middle-high memory - 0x7ff...)
+    Contains staticWelcomeMessage - This is READ-ONLY memory (const string)
+
+3. HEAP: 0x27417cedee0 (low memory - 0x2...)
+    Dynamically allocated Animal objects
+    Gets reused because we properly delete old objects and prevents memory leak
+
+MEMORY REGIONS FROM HIGH TO LOW:
+  Stack:         0x9000000000... (highest)
+  Data Segment:  0x7ff000000000... (middle-high)  
+  Heap:          0x0200000000... (lowest)
+
+The stack grows DOWN (from high to low addresses)
+The heap grows UP (from low to high addresses)
+
+================================================================================
+Question #5: Where is staticWelcomeMessage located?
+================================================================================
+
+staticWelcomeMessage is located in the DATA SEGMENT (also called static storage
+or the data section). This is separate from both the stack and the heap.
+
+Address: 0x7ff6b806a0a0
+The data segment sits between the stack and heap in the memory layout,
+containing all static and global variables that exist for the program's lifetime.
