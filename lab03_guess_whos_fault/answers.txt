@@ -99,6 +99,17 @@ MEMORY DIAGRAM:
 │                    HIGH MEMORY (0xFFFFFFFF...)           │
 ├──────────────────────────────────────────────────────────┤
 │                                                          │
+│  DATA SEGMENT (static/global variables):                │
+│  ┌────────────────────────────────────┐                 │
+│  │ 0x7ff6b806a0a0                    │ ← static         │
+│  │ staticWelcomeMessage               │   WelcomeMessage │
+│  │ "Welcome to the Animal Guesser!"   │   (constant)     │
+│  └────────────────────────────────────┘                 │
+│                                                          │
+│                      ↓ grows down                        │
+│                                                          │
+│                      (large gap)                         │
+│                                                          │
 │  STACK (grows downward from high addresses):            │
 │  ┌────────────────────────────────────┐                 │
 │  │ 0x91a1fffa38                      │ ← mysteryAnimal  │
@@ -111,13 +122,6 @@ MEMORY DIAGRAM:
 │                      (large gap)                         │
 │                                                          │
 │                      ↑ grows up                          │
-│                                                          │
-│  DATA SEGMENT (static/global variables):                │
-│  ┌────────────────────────────────────┐                 │
-│  │ 0x7ff6b806a0a0                    │ ← static         │
-│  │ staticWelcomeMessage               │   WelcomeMessage │
-│  │ "Welcome to the Animal Guesser!"   │   (constant)     │
-│  └────────────────────────────────────┘                 │
 │                                                          │
 │  HEAP (grows upward from low addresses):                │
 │  ┌────────────────────────────────────┐                 │
@@ -135,23 +139,24 @@ MEMORY DIAGRAM:
 
 ADDRESS ANALYSIS:
 
-1. STACK: 0x91a1fffa38 (high memory - 0x9...)
-    Contains the mysteryAnimal pointer variable (This address never changes)
-    
-2. DATA SEGMENT: 0x7ff6b806a0a0 (middle-high memory - 0x7ff...)
+1. DATA SEGMENT: 0x7ff6b806a0a0 (highest memory - 0x7ff...)
     Contains staticWelcomeMessage - This is READ-ONLY memory (const string)
+    
+2. STACK: 0x91a1fffa38 (middle memory - 0x9...)
+    Contains the mysteryAnimal pointer variable (This address never changes)
 
-3. HEAP: 0x27417cedee0 (low memory - 0x2...)
+3. HEAP: 0x27417cedee0 (lowest memory - 0x2...)
     Dynamically allocated Animal objects
     Gets reused because we properly delete old objects and prevents memory leak
 
-MEMORY REGIONS FROM HIGH TO LOW:
-  Stack:         0x9000000000... (highest)
-  Data Segment:  0x7ff000000000... (middle-high)  
+MEMORY REGIONS FROM HIGH TO LOW (CORRECTED):
+  Data Segment:  0x7ff000000000... (highest)
+  Stack:         0x9000000000... (middle)
   Heap:          0x0200000000... (lowest)
 
 The stack grows DOWN (from high to low addresses)
 The heap grows UP (from low to high addresses)
+The data segment is in a fixed high-memory location
 
 ================================================================================
 Question #5: Where is staticWelcomeMessage located?
